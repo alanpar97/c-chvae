@@ -28,7 +28,7 @@ The project is managed with [uv](https://docs.astral.sh/uv/). Clone the
 repository and install the package into a local virtual environment:
 
 ```bash
-git clone https://github.com/<your-org>/c-chvae.git
+git clone https://github.com/alanpar97/c-chvae
 cd c-chvae
 uv sync
 ```
