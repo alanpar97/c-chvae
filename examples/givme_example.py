@@ -1,8 +1,8 @@
 """End-to-end "Give Me Some Credit" example for the cchvae package.
 
-Loads the pre-processed Kaggle GiveMeSomeCredit data under
-``examples/data/givme``, trains a random-forest classifier, and generates
-counterfactuals for a few applicants predicted to default.
+Fetches the GiveMeSomeCredit dataset from OpenML (ID 46468), trains a
+random-forest classifier, and generates counterfactuals for a few applicants
+predicted to default.
 
 Run from the project root:
 
@@ -14,30 +14,16 @@ Run from the project root:
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 from cchvae import CCHVAE, Counterfactual
 
+from givme_data import CONDITIONAL_COLUMNS, FREE_COLUMNS, load_give_me_credit
+
 logging.basicConfig(level=logging.INFO, format="%(message)s")
-
-DATA_DIR = Path(__file__).parent / "data" / "givme"
-
-FREE_COLUMNS = [
-    "RevolvingUtilizationOfUnsecuredLines",
-    "NumberOfTime30-59DaysPastDueNotWorse",
-    "DebtRatio",
-    "MonthlyIncome",
-    "NumberOfOpenCreditLinesAndLoans",
-    "NumberOfTimes90DaysLate",
-    "NumberRealEstateLoansOrLines",
-    "NumberOfTime60-89DaysPastDueNotWorse",
-]
-CONDITIONAL_COLUMNS = ["age", "NumberOfDependents"]
 
 FEATURE_TYPES = {
     "RevolvingUtilizationOfUnsecuredLines": "pos",
@@ -54,14 +40,6 @@ FEATURE_TYPES = {
 
 # Subsample: the full dataset has ~120k rows; 5k is plenty for a demo.
 SUBSAMPLE = 5_000
-
-
-def load_give_me_credit() -> tuple[pd.DataFrame, np.ndarray]:
-    x_free = pd.read_csv(DATA_DIR / "give_me_x.csv", header=None, names=FREE_COLUMNS)
-    x_cond = pd.read_csv(DATA_DIR / "give_me_x_c.csv", header=None, names=CONDITIONAL_COLUMNS)
-    y = pd.read_csv(DATA_DIR / "give_me_y.csv", header=None).values.ravel().astype(int)
-    df = pd.concat([x_cond, x_free], axis=1)
-    return df, y
 
 
 def main() -> None:
