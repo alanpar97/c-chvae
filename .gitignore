@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[oc]
+*.egg-info/
+.python-version
+dist/
+build/
+wheels/
+*.DS_Store
+
+# Virtual environments & package managers
+.venv/
+uv.lock
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Type checking & linting
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Weights & Biases
+wandb/
+
+# Environment variables
+.env
+.env.*
+
+# IDEs
+.idea/
+.vscode/
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Temp / generated outputs
+*.csv
+*.pdf
+*.html
+*.css
+*.js

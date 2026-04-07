@@ -1,29 +1,94 @@
 # C-CHVAE
 
-## Set up
-Counterfactual explanations can be obtained by identifying the smallest change made to an input vector to influence a prediction in a positive way. Classic examples can be found in credit scoring or health contexts where one tries to change a classifier's decision from ’loan rejected’ to ’awarded’ or from ’high risk of cardiovascular disease’ to ’low risk’. Our approach ensures that the produced counterfactuals are **proximate** (i.e., not local outliers) and **connected** to regions with substantial data density (i.e., close to correctly classified observations), two requirements known as **counterfactual faithfulness**.
+A clean PyTorch implementation of **C-CHVAE** (Pawelczyk et al., WWW 2020):
+*Learning Model-Agnostic Counterfactual Explanations for Tabular Data*.
 
-## Intution
-We suggest embedding counterfactual search into a data density approximator, here a variational autoencoder (VAE). The idea is to use the VAE as a search device to find counterfactuals that are proximate and connected to the input data. Given the original tabular data, the encoder specifies a lower dimensional, realvalued and dense representation of that data, z. Therefore, it is the encoder that determines which low-dimensional neighbourhood we should look to for potential counterfactuals. Next, we perturb the low dimensional data representation, z + $\delta$, and feed the perturbed representation into the decoder. For small perturbations the decoder gives a potential counterfactual by reconstructing the input data from the perturbed representation. This counterfactualmis likely to occur. Next, the potential counterfactual is passed to the pretrained classifier, which we ask whether the prediction was altered. 
+## Setup
 
-## On running the (C-)HVAE
-To run the HVAE you have to predefine each input's type: you can choose one of the following: *real* (for inputs defined on the real line), *pos* (for inputs defined on positive part of R), *count* (for count inputs), *cat* (for categorical inputs) and *ordinal* (for ordinal inputs). To see an example, have a look at the *types*.csv files within the *data* folder.
+Counterfactual explanations identify the smallest change to an input that flips a
+classifier's prediction in a desired direction — e.g. turning "loan rejected" into
+"loan awarded", or "high cardiovascular risk" into "low risk". C-CHVAE produces
+counterfactuals that are **proximate** (not local outliers) and **connected** to
+regions of substantial data density (close to correctly classified observations).
+Together, these two requirements are known as **counterfactual faithfulness**.
 
+## Intuition
 
-## Bibtex 
+C-CHVAE embeds counterfactual search into a data-density approximator — a
+variational autoencoder. The encoder maps the original tabular data into a
+lower-dimensional, real-valued, dense representation `z`, which defines the
+neighbourhood to search. C-CHVAE then perturbs `z → z + δ` and decodes the
+perturbed latent back into feature space. For small perturbations, the decoder
+produces a plausible counterfactual that is passed to the pretrained classifier
+to check whether the prediction has flipped.
+
+## Installation
+
+The project is managed with [uv](https://docs.astral.sh/uv/). Clone the
+repository and install the package into a local virtual environment:
+
+```bash
+git clone https://github.com/alanpar97/c-chvae
+cd c-chvae
+uv sync
 ```
+
+This creates a `.venv/` in the project root with `cchvae` and all its
+dependencies installed. Activate it with `source .venv/bin/activate`, or run
+commands with `uv run python ...`.
+
+## Quick start
+
+`CCHVAE` takes any sklearn-style classifier together with a background
+`pandas.DataFrame` and returns `Counterfactual` objects for new instances.
+
+```python
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+
+from cchvae import CCHVAE
+
+# 1. A background dataset and a classifier you want to explain.
+X_train: pd.DataFrame = ...  # your training features
+y_train = ...                # your training labels
+
+clf = RandomForestClassifier().fit(X_train, y_train)
+
+# 2. Build the explainer. If no pretrained VAE is passed, one is trained here.
+explainer = CCHVAE(
+    classifier=clf,
+    background_data=X_train,
+    immutable_features=["age", "sex"],          # columns that must not change
+    feature_types={"income": "pos"},            # optional overrides; rest is inferred
+    z_dim=2,
+    epochs=50,
+)
+
+# 3. Explain a single instance (or a whole DataFrame of instances).
+instance = X_train.iloc[[0]]
+result = explainer.generate_counterfactuals(instance, n_counterfactuals=3)
+
+print(result.original_prediction, "→", result.counterfactual_prediction)
+print(result.highlighted_counterfactuals)   # only the columns that changed
+```
+
+For a full end-to-end example on the *Give Me Some Credit* dataset, see
+[`examples/givme_example.py`](examples/givme_example.py).
+
+## Bibtex
+
+```bibtex
 @inproceedings{pawelczyk_learning2019,
-author = {Pawelczyk, Martin and Broelemann, Klaus and Kasneci, Gjergji},
-title = {Learning Model-Agnostic Counterfactual Explanations for Tabular Data},
-year = {2020},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-booktitle = {Proceedings of The Web Conference 2020},
-pages = {3126–3132},
-numpages = {7},
-keywords = {Transparency, Counterfactual explanations, Interpretability},
-location = {Taipei, Taiwan},
-series = {WWW '20}
+  author    = {Pawelczyk, Martin and Broelemann, Klaus and Kasneci, Gjergji},
+  title     = {Learning Model-Agnostic Counterfactual Explanations for Tabular Data},
+  year      = {2020},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  booktitle = {Proceedings of The Web Conference 2020},
+  pages     = {3126--3132},
+  numpages  = {7},
+  keywords  = {Transparency, Counterfactual explanations, Interpretability},
+  location  = {Taipei, Taiwan},
+  series    = {WWW '20}
 }
 ```
-
